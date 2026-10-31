@@ -33,11 +33,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/myriad-you/Myriad.git",
-    "directory": "tapp/tools/tapp-cli"
+    "url": "git+https://github.com/Myriad-You/myriad-tapp.git",
+    "directory": "tools/tapp-cli"
   },
-  "homepage": "https://github.com/myriad-you/Myriad/tree/preview/tapp/tools/tapp-cli",
+  "homepage": "https://github.com/Myriad-You/myriad-tapp/tree/main/tools/tapp-cli",
   "bugs": {
-    "url": "https://github.com/myriad-you/Myriad/issues"
+    "url": "https://github.com/Myriad-You/myriad-tapp/issues"
   }
 }

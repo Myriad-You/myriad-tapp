@@ -1,0 +1,70 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Contract, rules and exporter
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@1.99
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --all-targets --locked
+
+  cli:
+    name: CLI
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: tools/tapp-cli
+    steps:
+      - uses: actions/checkout@v5
+      # The oldest Node the published package supports (engines >= 20).
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      # sync-contract runs the contract exporter.
+      - uses: dtolnay/rust-toolchain@1.99
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
+      - run: npm ci
+      - name: Regenerate contract
+        run: npm run sync-contract
+      - name: Verify generated contract is committed
+        run: git diff --exit-code -- src/generated
+      - run: npm test
+      - name: Verify publish package
+        run: npm run pack:check
+
+  runtime:
+    name: Runtime
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          # packageManager names pnpm, which is not installed yet at this step.
+          package-manager-cache: false
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test

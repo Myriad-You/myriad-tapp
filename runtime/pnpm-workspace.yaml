@@ -1,0 +1,11 @@
+# Used only when the runtime is installed on its own. Inside Myriad, the
+# runtime is a member of frontend/'s workspace and frontend/pnpm-workspace.yaml applies.
+minimumReleaseAgeExcludePrune: true
+trustPolicy: no-downgrade
+shellEmulator: true
+
+allowBuilds:
+  esbuild: true
+
+onlyBuiltDependencies:
+  - esbuild

@@ -11,8 +11,9 @@ function isTappRoot(root) {
 }
 
 /**
- * Locate the Tapp source tree from inside it, from tapp-store, or from
- * MYRIAD_REPO_ROOT (a Myriad checkout or its tapp/ directory).
+ * Locate the Tapp source tree from inside it, from tapp-store (beside a
+ * myriad-tapp or Myriad checkout), or from MYRIAD_REPO_ROOT (a myriad-tapp
+ * checkout, a Myriad checkout, or Myriad's tapp/ directory).
  */
 export function findTappRoot(packageRoot) {
   const env = process.env.MYRIAD_REPO_ROOT
@@ -20,6 +21,7 @@ export function findTappRoot(packageRoot) {
     env,
     env && resolve(env, 'tapp'),
     resolve(packageRoot, '../..'),
+    resolve(packageRoot, '../../myriad-tapp'),
     resolve(packageRoot, '../../Myriad/tapp'),
   ].filter(Boolean)
 
