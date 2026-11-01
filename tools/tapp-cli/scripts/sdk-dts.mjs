@@ -283,12 +283,15 @@ function localMembers() {
 }
 
 /**
- * @param {{ actions: Record<string, string>, headlessDeniedActions?: string[] }} catalog
+ * @param {{ actions: Record<string, string>, deniedActions?: Record<string, string[]> }} catalog
  */
 export function generateTappSdkDts(catalog) {
   const actions = catalog.actions || {}
   const tree = buildTree(actions)
-  const denied = [...(catalog.headlessDeniedActions || [])].sort()
+  const deniedByProfile = Object.entries(catalog.deniedActions || {})
+    .map(([profile, actions]) => [profile, [...actions].sort()])
+    .filter(([, actions]) => actions.length > 0)
+    .sort(([a], [b]) => a.localeCompare(b))
   const curated = new Set([
     'lifecycle',
     'storage',
@@ -314,10 +317,9 @@ export function generateTappSdkDts(catalog) {
     genericLines.push(...renderNamespace(name, tree[name], 1))
   }
 
-  const deniedComment =
-    denied.length > 0
-      ? `\n * Headless-denied Bridge actions: ${denied.join(', ')}\n *`
-      : ''
+  const deniedComment = deniedByProfile
+    .map(([profile, actions]) => `\n * ${profile[0].toUpperCase()}${profile.slice(1)}-denied Bridge actions: ${actions.join(', ')}\n *`)
+    .join('')
 
   return `/**
  * Myriad Tapp sandbox SDK (window.Tapp).

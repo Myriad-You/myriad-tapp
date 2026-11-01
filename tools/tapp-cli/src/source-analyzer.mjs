@@ -6,7 +6,7 @@ const contract = JSON.parse(
   await readFile(new URL('./generated/contract.json', import.meta.url), 'utf8'),
 )
 const ACTIONS = contract.permissions.actions
-const HEADLESS_DENIED_ACTIONS = new Set(contract.capabilities?.headlessDeniedActions || [])
+const HEADLESS_DENIED_ACTIONS = new Set(contract.capabilities?.deniedActions?.headless || [])
 const CODE_EXTENSIONS = new Set(contract.rules.sourceCodeExtensions)
 const SKIP_DIRECTORIES = new Set(contract.rules.sourceScanSkipDirectories)
 const ASSET_LITERAL_METHODS = new Set(contract.rules.assetLiteralMethods)

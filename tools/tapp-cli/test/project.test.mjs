@@ -72,7 +72,8 @@ describe('Tapp project core', () => {
       ),
       current,
     )
-    assert.ok(current.headlessDeniedActions.includes('ui.confirm'))
+    assert.ok(current.deniedActions.headless.includes('ui.confirm'))
+    assert.equal(current.headlessDeniedActions, undefined)
     await access(resolve(packageRoot, 'src/generated/manifest.schema.json'))
     await access(resolve(packageRoot, 'src/generated/capability-profiles.json'))
     const sdkDts = await readFile(

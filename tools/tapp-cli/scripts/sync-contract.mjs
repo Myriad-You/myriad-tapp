@@ -46,7 +46,7 @@ if (!permissionLevels || Object.keys(permissionLevels).length < 30) {
 if (!actions || Object.keys(actions).length < 150) {
   throw new Error('tapp-contract export did not include sandbox actions')
 }
-if (!capabilities?.profiles?.length || !capabilities?.headlessDeniedActions?.length) {
+if (!capabilities?.profiles?.length || !capabilities?.deniedActions?.headless?.length) {
   throw new Error('tapp-contract export did not include capability profiles')
 }
 
@@ -74,7 +74,7 @@ const manifestSchema = {
 
 const sdkDts = generateTappSdkDts({
   actions,
-  headlessDeniedActions: capabilities.headlessDeniedActions,
+  deniedActions: capabilities.deniedActions,
 })
 
 await mkdir(generatedDir, { recursive: true })
@@ -83,7 +83,7 @@ await writeFile(schemaPath, `${JSON.stringify(manifestSchema, null, 2)}\n`)
 await writeFile(capabilityPath, `${JSON.stringify(capabilities, null, 2)}\n`)
 await writeFile(sdkDtsPath, sdkDts.endsWith('\n') ? sdkDts : `${sdkDts}\n`)
 console.log(
-  `Wrote TApp contract with ${Object.keys(actions).length} actions, ${Object.keys(permissionLevels).length} permissions, and ${capabilities.headlessDeniedActions.length} headless-denied actions to ${outputPath}`,
+  `Wrote TApp contract with ${Object.keys(actions).length} actions, ${Object.keys(permissionLevels).length} permissions, and ${capabilities.deniedActions.headless.length} headless-denied actions to ${outputPath}`,
 )
 console.log(`Wrote Manifest JSON Schema to ${schemaPath}`)
 console.log(`Wrote capability profiles to ${capabilityPath}`)

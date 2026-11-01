@@ -30,8 +30,8 @@ fn list_map<'a>(values: &'a [(&'a str, &'a [&'a str])]) -> BTreeMap<&'a str, &'a
 const SANDBOX_CONTRACT_JSON: &str = include_str!("../../../shared/tapp_sandbox_contract.json");
 
 /// Parsed sandbox contract, checked against the permission catalog: every
-/// action names `public` or a catalog permission, and every headless-denied
-/// action is a known action.
+/// action names `public` or a catalog permission, and `deniedActions` maps
+/// listed profiles to known actions.
 #[cfg(feature = "tapp-contract-schema")]
 fn sandbox_contract() -> (Value, Value) {
     let mut value: Value = serde_json::from_str(SANDBOX_CONTRACT_JSON)
@@ -59,17 +59,28 @@ fn sandbox_contract() -> (Value, Value) {
         !profiles.is_empty() && profiles.iter().all(Value::is_string),
         "sandbox capability profiles must be non-empty strings"
     );
-    for denied in capabilities["headlessDeniedActions"]
-        .as_array()
-        .expect("sandbox contract capabilities.headlessDeniedActions must be an array")
-    {
-        let denied = denied
-            .as_str()
-            .expect("headless-denied action must be a string");
+    // Profile -> actions that profile removes; a profile not listed removes
+    // nothing. Profiles other hosts add later go here without a new key.
+    let denied_by_profile = capabilities["deniedActions"]
+        .as_object()
+        .expect("sandbox contract capabilities.deniedActions must be an object");
+    for (profile, denied) in denied_by_profile {
         assert!(
-            action_map.contains_key(denied),
-            "headless-denied action {denied} is not a sandbox action"
+            profiles.iter().any(|listed| listed == profile.as_str()),
+            "deniedActions names unknown profile {profile}"
         );
+        for denied in denied
+            .as_array()
+            .unwrap_or_else(|| panic!("deniedActions.{profile} must be an array"))
+        {
+            let denied = denied
+                .as_str()
+                .unwrap_or_else(|| panic!("deniedActions.{profile} entries must be strings"));
+            assert!(
+                action_map.contains_key(denied),
+                "{profile}-denied action {denied} is not a sandbox action"
+            );
+        }
     }
     (actions, capabilities)
 }
@@ -315,9 +326,14 @@ mod export_catalog_tests {
         let actions = exported["actions"].as_object().expect("actions");
         assert_eq!(actions["lifecycle.ready"], "public");
         assert_eq!(actions["storage.set"], "storage:write");
-        let denied = exported["capabilities"]["headlessDeniedActions"]
+        let denied = exported["capabilities"]["deniedActions"]["headless"]
             .as_array()
-            .expect("headlessDeniedActions");
+            .expect("deniedActions.headless");
         assert!(denied.iter().any(|action| action == "ui.confirm"));
+        assert!(
+            exported["capabilities"]
+                .get("headlessDeniedActions")
+                .is_none()
+        );
     }
 }

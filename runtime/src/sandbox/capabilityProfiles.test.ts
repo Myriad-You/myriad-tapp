@@ -1,13 +1,16 @@
 import type { TappInstance } from '../types'
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import sandboxContract from '../../../shared/tapp_sandbox_contract.json' with { type: 'json' }
 import { PERMISSION_MAP } from '../permissionConfig.ts'
 import { createTestTappKernel } from '../testing.ts'
 import {
   applySandboxCapabilityProfile,
-  HEADLESS_DENIED_ACTIONS,
+  deniedActionsFor,
 } from './capabilityProfiles.ts'
 import { generateFullSDK } from './sdkGenerator.ts'
+
+const HEADLESS_DENIED_ACTIONS = deniedActionsFor('headless')
 
 const instance: TappInstance = {
   id: 'com.example.profile-test',
@@ -179,7 +182,17 @@ describe('sandbox capability profiles', () => {
     assert.match(sdk, /sendRequest\('ui', 'showNotification'/)
   })
 
-  it('unregisters only HEADLESS_DENIED_ACTIONS and keeps KV handlers', () => {
+  it('names only listed profiles; page and widget remove nothing', () => {
+    const { profiles, deniedActions } = sandboxContract.capabilities
+    for (const profile of Object.keys(deniedActions)) {
+      assert.ok(profiles.includes(profile), profile)
+    }
+    assert.ok(HEADLESS_DENIED_ACTIONS.includes('ui.confirm'))
+    assert.deepEqual(deniedActionsFor('page'), [])
+    assert.deepEqual(deniedActionsFor('widget'), [])
+  })
+
+  it('unregisters only the headless-denied actions and keeps KV handlers', () => {
     const bridge = createTestTappKernel().kernel.createBridge()
     const handlers = (
       bridge as unknown as { messageHandlers: Map<string, unknown> }

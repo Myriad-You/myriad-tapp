@@ -4,18 +4,22 @@ import sandboxContract from '../../../shared/tapp_sandbox_contract.json' with { 
 export type SandboxCapabilityProfile = 'page' | 'widget' | 'headless'
 
 /**
- * 可见/控制面动作不得从后台 core 触及。数据在
- * `shared/tapp_sandbox_contract.json`（与 CLI/SDK 契约同源）。
+ * 每种配置去掉哪些动作（例如后台 core 碰不到可见/控制面动作）。数据在
+ * `shared/tapp_sandbox_contract.json` 的 `capabilities.deniedActions`（与 CLI/SDK
+ * 契约同源）；契约里没列的配置什么都不去掉。
  */
-export const HEADLESS_DENIED_ACTIONS: readonly string[] =
-  sandboxContract.capabilities.headlessDeniedActions
+const DENIED_ACTIONS: Partial<Record<SandboxCapabilityProfile, readonly string[]>>
+  = sandboxContract.capabilities.deniedActions
+
+export function deniedActionsFor(profile: SandboxCapabilityProfile): readonly string[] {
+  return DENIED_ACTIONS[profile] ?? []
+}
 
 export function applySandboxCapabilityProfile(
   bridge: TappBridge,
   profile: SandboxCapabilityProfile,
 ): void {
-  if (profile !== 'headless') return
-  for (const action of HEADLESS_DENIED_ACTIONS) {
+  for (const action of deniedActionsFor(profile)) {
     bridge.unregisterHandler(action)
   }
 }

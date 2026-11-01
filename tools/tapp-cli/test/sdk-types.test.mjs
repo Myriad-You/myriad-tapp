@@ -10,7 +10,7 @@ it('types AI task inputs and snapshots and rejects malformed inputs', async () =
   const contract = JSON.parse(await readFile(new URL('../src/generated/contract.json', import.meta.url), 'utf8'))
   const generated = generateTappSdkDts({
     actions: contract.permissions.actions,
-    headlessDeniedActions: contract.capabilities.headlessDeniedActions,
+    deniedActions: contract.capabilities.deniedActions,
   })
   const shipped = await readFile(new URL('../src/generated/tapp-sdk.d.ts', import.meta.url), 'utf8')
   assert.equal(shipped, generated)

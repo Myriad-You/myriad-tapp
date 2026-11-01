@@ -2,7 +2,7 @@ import type { TappInstance, TappPermission } from '../types'
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { PERMISSION_MAP } from '../permissionConfig.ts'
-import { HEADLESS_DENIED_ACTIONS } from './capabilityProfiles.ts'
+import { deniedActionsFor } from './capabilityProfiles.ts'
 import {
   generateFullSDK,
   generateWidgetSDK,
@@ -486,7 +486,7 @@ describe('generated SDK runtime', () => {
       assert.equal(PERMISSION_MAP.get('settings.getAll'), 'storage:read')
       assert.equal(PERMISSION_MAP.has('settings.onChanged'), false)
     }
-    for (const action of HEADLESS_DENIED_ACTIONS) {
+    for (const action of deniedActionsFor('headless')) {
       assert.equal(action.startsWith('storage.'), false, action)
       assert.equal(action.startsWith('shared.'), false, action)
       assert.equal(action.startsWith('private.'), false, action)
