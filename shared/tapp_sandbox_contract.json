@@ -13,6 +13,7 @@
     "context.getNavigation": "public",
     "context.getSystem": "public",
     "context.getGeo": "public",
+    "context.getCapabilities": "public",
     "persona.get": "public",
     "user.getRole": "public",
     "user.isAdmin": "public",
@@ -282,7 +283,9 @@
     "federation.uploadChunk": "federation:files",
     "federation.cancelTransfer": "federation:files"
   },
-  "actionsSince": {},
+  "actionsSince": {
+    "context.getCapabilities": 2
+  },
   "capabilities": {
     "profiles": [
       "page",

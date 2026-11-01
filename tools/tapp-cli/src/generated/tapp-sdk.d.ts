@@ -80,6 +80,14 @@ export type TappAITaskEventKind =
   | 'cancelled'
   | 'resync'
 
+/** What `Tapp.context.getCapabilities()` answers (contract version 2). */
+export interface TappCapabilities {
+  /** Granted permissions, the same list as `Tapp.permissions`. */
+  permissions: string[]
+  /** Actions this host can serve here: implemented, kept by this profile, and public or granted. */
+  actions: string[]
+}
+
 export interface TappAIUsageSnapshot {
   calls: {
     limit: number | null
@@ -391,6 +399,7 @@ export interface TappSdk {
   }
   context: {
     getApp(...args: unknown[]): Promise<unknown>
+    getCapabilities(): Promise<TappCapabilities>
     getGeo(...args: unknown[]): Promise<unknown>
     getNavigation(...args: unknown[]): Promise<unknown>
     getPlayer(...args: unknown[]): Promise<unknown>

@@ -1113,6 +1113,32 @@ const geo = await Tapp.context.getGeo();
 // 安装后: { lat, lon, city, region, country } 或服务不可用时的失败
 ```
 
+### 能力检测
+
+`Tapp.context.getCapabilities()` 回答「在这里能调什么」，由宿主的桥直接回答，不经后端，
+Page、Widget 和 headless core 都可调用。从契约版本 2 起才有：用到它的 Tapp 要在 Manifest
+里写 `"minContractVersion": 2`（`myriad-tapp check` 会提示）。
+
+```javascript
+const caps = await Tapp.context.getCapabilities();
+// {
+//   permissions: ["storage:read", "ui:confirm"],   // 授予的权限，与 Tapp.permissions 相同
+//   actions: ["context.getCapabilities", "storage.get", "ui.confirm", ...]
+// }
+
+if (caps.actions.includes("ui.confirm")) {
+  await Tapp.ui.confirm("继续？");
+}
+```
+
+`actions` 里的动作同时满足三条：这个宿主实现了它，当前界面（Page / Widget / headless）
+没有去掉它，它是公开动作或所需权限已授予。名字就是 `命名空间.方法`，与
+`Tapp.命名空间.方法()` 一一对应。不同宿主实现的动作可能不同，按这里的结果决定显示什么，
+不要按宿主名字猜。
+
+列表只看授予权限。真正调用时宿主还会再校验（比如媒体控制要先换到运行时授权，后端也会按
+登录态和配额再查一遍），所以在列表里的动作也可能被拒；调用结果仍以实际返回为准。
+
 ---
 
 ## 人设名片 API

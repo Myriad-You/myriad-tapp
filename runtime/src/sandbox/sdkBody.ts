@@ -1158,6 +1158,7 @@ ${uiNamespace(surface)}
       getNavigation: () => sendRequest('context', 'getNavigation', []),
       getSystem: () => sendRequest('context', 'getSystem', []),
       getGeo: () => sendRequest('context', 'getGeo', []),
+      getCapabilities: () => sendRequest('context', 'getCapabilities', []),
     },
     persona: {
       get: () => sendRequest('persona', 'get', []),

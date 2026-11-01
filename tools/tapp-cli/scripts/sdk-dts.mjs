@@ -27,20 +27,26 @@ function buildTree(actions) {
   return tree
 }
 
-function renderNamespace(name, node, level = 1) {
+// Generic namespaces render every action as `(...args) => Promise<unknown>`;
+// an action listed here gets its real signature instead.
+const TYPED_ACTIONS = {
+  'context.getCapabilities': '(): Promise<TappCapabilities>',
+}
+
+function renderNamespace(name, node, level = 1, prefix = '') {
   const lines = []
   const pad = indent(level)
+  const path = prefix ? `${prefix}.${name}` : name
   lines.push(`${pad}${name}: {`)
   for (const method of Object.keys(node.methods).sort()) {
     const permission = node.methods[method]
     const note =
       permission && permission !== 'public' ? ` // permission: ${permission}` : ''
-    lines.push(
-      `${indent(level + 1)}${method}(...args: unknown[]): Promise<unknown>${note}`,
-    )
+    const signature = TYPED_ACTIONS[`${path}.${method}`] ?? '(...args: unknown[]): Promise<unknown>'
+    lines.push(`${indent(level + 1)}${method}${signature}${note}`)
   }
   for (const child of Object.keys(node.children).sort()) {
-    lines.push(...renderNamespace(child, node.children[child], level + 1))
+    lines.push(...renderNamespace(child, node.children[child], level + 1, path))
   }
   lines.push(`${pad}}`)
   return lines
@@ -400,6 +406,14 @@ export type TappAITaskEventKind =
   | 'error'
   | 'cancelled'
   | 'resync'
+
+/** What \`Tapp.context.getCapabilities()\` answers (contract version 2). */
+export interface TappCapabilities {
+  /** Granted permissions, the same list as \`Tapp.permissions\`. */
+  permissions: string[]
+  /** Actions this host can serve here: implemented, kept by this profile, and public or granted. */
+  actions: string[]
+}
 
 export interface TappAIUsageSnapshot {
   calls: {

@@ -16,6 +16,22 @@ import { TAPP_PACKAGE_PAYLOAD_BYTES } from './tappPackageLimits'
 
 type MessageHandler = (message: TappMessage) => Promise<TappAPIResponse>
 
+/** What `Tapp.context.getCapabilities()` answers. */
+export interface TappCapabilities {
+  /** Granted permissions, the same list as `Tapp.permissions`. */
+  permissions: string[]
+  /**
+   * Actions this bridge can serve to this Tapp: it has a handler (so the host
+   * implements it and this profile keeps it) and the action is public or its
+   * permission is granted. A server-authoritative permission is still checked
+   * by the host when the action is called.
+   */
+  actions: string[]
+}
+
+/** Answered by the bridge itself, whatever the host registers. */
+const CAPABILITIES_ACTION = 'context.getCapabilities'
+
 const BRIDGE_LIMITS = {
   messagesPerMinute: 240,
   maxConcurrentRequests: 32,
@@ -233,6 +249,10 @@ export class TappBridge {
   private iframe: HTMLIFrameElement | null = null
   private tappInstance: TappInstance | null = null
   private messageHandlers: Map<string, MessageHandler> = new Map()
+  private readonly kernelHandlers: ReadonlyMap<string, MessageHandler> = new Map([
+    [CAPABILITIES_ACTION, async () => ({ success: true, data: this.describeCapabilities() })],
+  ])
+
   private eventListeners: Map<string, Set<(data: unknown) => void>> = new Map()
   private seenRequestIds = new Set<string>()
 
@@ -466,7 +486,22 @@ export class TappBridge {
   }
 
   registerHandler(action: string, handler: MessageHandler): void {
+    if (this.kernelHandlers.has(action)) {
+      throw new Error(`${action} is answered by the bridge itself`)
+    }
     this.messageHandlers.set(action, handler)
+  }
+
+  private describeCapabilities(): TappCapabilities {
+    const permissions = [...(this.tappInstance?.grantedPermissions ?? [])]
+    const granted = new Set<string>(permissions)
+    const actions = [...new Set([...this.kernelHandlers.keys(), ...this.messageHandlers.keys()])]
+      .filter((action) => {
+        const required = PERMISSION_MAP.get(action)
+        return required === 'public' || (required !== undefined && granted.has(required))
+      })
+      .sort()
+    return { permissions, actions }
   }
 
   unregisterHandler(action: string): void {
@@ -896,7 +931,7 @@ export class TappBridge {
       return
     }
 
-    const handler = this.messageHandlers.get(action)
+    const handler = this.kernelHandlers.get(action) ?? this.messageHandlers.get(action)
     if (!handler) {
       if (this.tappInstance?.previewMode) {
         this.sendResponse(id, {

@@ -62,6 +62,27 @@ describe('minContractVersion', () => {
     assert.ok(shipped.schema.properties.minContractVersion)
   })
 
+  it('requires version 2 for a Tapp that calls context.getCapabilities', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'myriad-tapp-capabilities-'))
+    try {
+      await createProject(root, { type: 'page' })
+      await writeFile(join(root, 'core.js'), 'Tapp.context.getCapabilities();\n')
+      let report = await inspectProject(root)
+      const required = report.diagnostics.find(({ code }) => code === 'contract-version-required')
+      assert.ok(required, 'expected contract-version-required')
+      assert.match(required.message, /"minContractVersion": 2/)
+
+      const manifestPath = join(root, 'manifest.json')
+      const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+      manifest.minContractVersion = 2
+      await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
+      report = await inspectProject(root)
+      assert.equal(report.diagnostics.filter(({ code }) => code.startsWith('contract-version')).length, 0)
+    } finally {
+      await rm(root, { recursive: true })
+    }
+  })
+
   it('reaches check through the project inspection', async () => {
     const root = await mkdtemp(join(tmpdir(), 'myriad-tapp-contract-version-'))
     try {

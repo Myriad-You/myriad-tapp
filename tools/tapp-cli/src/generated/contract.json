@@ -5,8 +5,10 @@
     "crates/tapp-contract/src/permission.rs",
     "shared/tapp_sandbox_contract.json"
   ],
-  "actionsSince": {},
-  "contractVersion": 1,
+  "actionsSince": {
+    "context.getCapabilities": 2
+  },
+  "contractVersion": 2,
   "limits": {
     "agentIntents": 16,
     "agentInteractions": 32,
@@ -1899,6 +1901,7 @@
       "component.registerTheme": "component:theme",
       "component.unregister": "public",
       "context.getApp": "public",
+      "context.getCapabilities": "public",
       "context.getGeo": "public",
       "context.getNavigation": "public",
       "context.getPlayer": "public",

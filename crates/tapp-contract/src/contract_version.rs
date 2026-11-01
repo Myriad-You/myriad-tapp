@@ -14,7 +14,9 @@ use serde_json::Value;
 /// something an app can rely on, a manifest field or a bridge action, and
 /// record what came with it: fields in [`MANIFEST_FIELDS_SINCE`], actions in
 /// `actionsSince` of `shared/tapp_sandbox_contract.json`.
-pub const TAPP_CONTRACT_VERSION: u32 = 1;
+///
+/// 2: `context.getCapabilities`.
+pub const TAPP_CONTRACT_VERSION: u32 = 2;
 
 /// Top-level manifest fields and the contract version that added them. A field
 /// not listed has been there since version 1.
