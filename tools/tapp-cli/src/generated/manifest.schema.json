@@ -1185,6 +1185,15 @@
         "null"
       ]
     },
+    "minContractVersion": {
+      "description": "需要的 Tapp 契约版本（从 1 开始的整数）。只在用到第 1 版之后才加的\n字段或动作时写；宿主在严格解析之前先读它，比自己实现的新就要求更新宿主。",
+      "format": "uint32",
+      "minimum": 1,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
     "minSystemVersion": {
       "type": [
         "string",

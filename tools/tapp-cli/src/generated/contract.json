@@ -5,6 +5,8 @@
     "crates/tapp-contract/src/permission.rs",
     "shared/tapp_sandbox_contract.json"
   ],
+  "actionsSince": {},
+  "contractVersion": 1,
   "limits": {
     "agentIntents": 16,
     "agentInteractions": 32,
@@ -80,6 +82,7 @@
     "widgetSizes": 10,
     "widgets": 64
   },
+  "manifestFieldsSince": {},
   "patterns": {
     "localeTag": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$",
     "namedValue": "^[A-Za-z0-9._-]+$",
@@ -1703,6 +1706,15 @@
         "description": "展示文案的多语言覆盖：语言标签 → { name?, description? }",
         "type": [
           "object",
+          "null"
+        ]
+      },
+      "minContractVersion": {
+        "description": "需要的 Tapp 契约版本（从 1 开始的整数）。只在用到第 1 版之后才加的\n字段或动作时写；宿主在严格解析之前先读它，比自己实现的新就要求更新宿主。",
+        "format": "uint32",
+        "minimum": 1,
+        "type": [
+          "integer",
           "null"
         ]
       },

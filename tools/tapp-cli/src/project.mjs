@@ -19,6 +19,7 @@ import {
 import { writeZip, zipSize } from './zip.mjs'
 import { createStarterTemplate } from './starter-template.mjs'
 import { analyzeProjectCode } from './source-analyzer.mjs'
+import { contractVersionDiagnostics } from './contract-version.mjs'
 import { packageLimitsForManifest, validateProjectResources } from './resource-validator.mjs'
 
 const contract = JSON.parse(
@@ -1261,6 +1262,7 @@ export async function inspectProject(projectRoot = '.') {
   const resources = await validateProjectResources(root, manifest)
   const analysis = await analyzeProjectCode({ root, manifest, surfaces })
   diagnostics.push(...resources.diagnostics, ...analysis.diagnostics)
+  diagnostics.push(...contractVersionDiagnostics({ manifest, usedActions: analysis.usedActions, contract }))
   for (const entry of analysis.requiredPermissions.values()) {
     for (const reason of entry.reasons) {
       for (const file of entry.locations) addRequiredPermission(requiredPermissions, entry.permission, reason, file)

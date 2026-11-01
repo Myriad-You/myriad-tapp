@@ -136,6 +136,10 @@ in automation to keep the selected binary explicit.
 - literal `Tapp.assets.*("path")` references;
 - runtime surface consistency (`page` layer resources, widgets ↔ `widget:register`);
 - headless capability profile: actions denied in background core;
+- `minContractVersion`: required, with the value to write, when the code or
+  manifest uses something added after contract version 1; flagged when it is
+  unneeded or higher than needed, since hosts that predate the field reject any
+  manifest carrying it;
 - `manifest.json` size, per-resource byte limits, and `.tapp` entry count and
   package size limits.
 

@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use myriad_tapp_contract::contract_rules::MAX_TAPP_MANIFEST_BYTES;
+use myriad_tapp_contract::contract_version::{ContractTooNew, check_min_contract_version};
 use myriad_tapp_contract::manifest::TappManifest;
 use myriad_tapp_contract::validate::{validate_named_resource_keys, validate_tapp_manifest};
 
@@ -104,6 +105,8 @@ pub enum PackageLoadError {
     ManifestTooLarge,
     ManifestUnreadable,
     ManifestParse(String),
+    /// `minContractVersion` is newer than this host: update the host first.
+    ContractTooNew(ContractTooNew),
 }
 
 impl PackageLoadError {
@@ -116,6 +119,7 @@ impl PackageLoadError {
             }
             Self::ManifestUnreadable => "Failed to read manifest.json".to_string(),
             Self::ManifestParse(message) => message.clone(),
+            Self::ContractTooNew(too_new) => too_new.to_string(),
         }
     }
 
@@ -204,6 +208,18 @@ const PRE_LAYER_MANIFEST_FIELDS: &[&str] = &[
 ];
 
 pub fn parse_manifest_json(content: &str) -> Result<TappManifest, PackageLoadError> {
+    // Before the strict parse: a manifest for a newer contract may carry fields
+    // this host does not know, and the answer to it is "update", not "invalid".
+    if let Ok(raw) = serde_json::from_str::<serde_json::Value>(content)
+        && let Err(too_new) = check_min_contract_version(&raw)
+    {
+        tracing::warn!(
+            required = too_new.required,
+            supported = too_new.supported,
+            "tapp manifest needs a newer contract"
+        );
+        return Err(PackageLoadError::ContractTooNew(too_new));
+    }
     match serde_json::from_str::<TappManifest>(content) {
         Ok(manifest) => {
             warn_older_category_name(content.as_bytes(), &manifest.id);
@@ -505,6 +521,46 @@ mod tests {
         assert!(!message.contains("hasPage"), "got: {message}");
         assert!(!message.contains("unknown field"), "got: {message}");
         assert!(!message.contains("TAPP_FILE_FORMAT"), "got: {message}");
+    }
+
+    /// 比本宿主新的契约：即使带着不认识的字段，也答「需要更新宿主」而不是「清单无效」。
+    #[test]
+    fn newer_contract_is_answered_before_the_strict_parse() {
+        let supported = myriad_tapp_contract::contract_version::TAPP_CONTRACT_VERSION;
+        let newer = u64::from(supported) + 1;
+        let error = parse_manifest_json(&format!(
+            r#"{{
+                "id": "com.example.future",
+                "name": "Future",
+                "version": "1.0.0",
+                "category": "utility",
+                "core": {{ "entry": "main.js" }},
+                "minContractVersion": {newer},
+                "fieldFromTheFuture": true
+            }}"#
+        ))
+        .expect_err("a newer contract must not parse");
+        assert!(
+            matches!(
+                error,
+                PackageLoadError::ContractTooNew(ContractTooNew { required, supported: s })
+                    if required == newer && s == supported
+            ),
+            "got: {error:?}"
+        );
+
+        let current = parse_manifest_json(&format!(
+            r#"{{
+                "id": "com.example.current",
+                "name": "Current",
+                "version": "1.0.0",
+                "category": "utility",
+                "core": {{ "entry": "main.js" }},
+                "minContractVersion": {supported}
+            }}"#
+        ))
+        .expect("the current contract parses");
+        assert_eq!(current.min_contract_version, Some(supported));
     }
 
     /// 结构性错误也不把 serde 的列号/期望 token 抛给用户。

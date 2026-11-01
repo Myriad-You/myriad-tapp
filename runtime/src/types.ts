@@ -89,6 +89,9 @@ export interface TappManifest {
 
   minSystemVersion?: string
 
+  /** 用到第 1 版之后才有的契约内容时需要的契约版本；宿主在严格解析前先读它。 */
+  minContractVersion?: number
+
   widgets?: ManifestWidget[]
 
   /** 共享层。声明 backgroundRequirements 时必须有。 */

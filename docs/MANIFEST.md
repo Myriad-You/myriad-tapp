@@ -30,6 +30,7 @@ Manifest 是 Tapp 的核心配置文件，定义了应用的元数据、权限�
 | `game`                   | object   | ❌   | 对局会话 `{protocol, maxPlayers?}`（须 `game:session`） |
 | `runtimeModules`         | string[] | ❌   | 宿主注入库；目前仅 `"three"`（game / developer） |
 | `minSystemVersion`       | string   | ❌   | 最低兼容 Myriad 语义版本           |
+| `minContractVersion`     | integer  | ❌   | 需要的契约版本；只在用到第 1 版之后的功能时写 |
 | `homepage`               | string   | ❌   | 应用主页 URL                       |
 | `repository`             | string   | ❌   | 代码仓库 URL                       |
 | `category`               | string   | ✅   | 应用用途分类（稳定 ID）            |
@@ -230,6 +231,17 @@ Page、Widget 和 headless core 是运行形态，由 `page`、`widgets` 和
 `minSystemVersion` 使用语义版本。直接安装、商店安装和更新都会由后端与当前 Myriad
 包版本比较；当前版本过低或字段格式无效时会拒绝写入，避免出现“安装成功但运行时才
 发现 API 不兼容”。最低版本只写在包内 Manifest；商店 index 不重复维护第二份版本来源。
+
+`minContractVersion` 是需要的 **Tapp 契约版本**，一个从 1 开始的整数，和 Myriad 自己的
+版本号无关：任何实现这份契约的宿主都按它判断。契约每加一样应用能依赖的东西（Manifest
+字段或 SDK 动作）就加 1，CLI 生成的 `contract.json` 里 `contractVersion` 是当前版本，
+`manifestFieldsSince` / `actionsSince` 写着第 1 版之后加的字段和动作各从哪一版起有。
+
+宿主在严格解析 Manifest 之前先读这一个字段：比自己实现的版本新，就固定回答「需要更新
+宿主」，而不是因为不认识的字段报「Manifest 无效」。比这个字段更早的宿主不认识它，遇到
+就会整个拒收，所以**只在用到新功能时才写**：`myriad-tapp check` 发现代码或 Manifest 用到
+第 1 版之后的东西却没写（或写低了）时报错并给出该写的值；没用到却写了、或写得比需要的
+高时给警告。
 
 ### 所有权、可见性与同 ID 并存
 

@@ -1,5 +1,5 @@
 {
-  "description": "Tapp sandbox bridge contract: action -> required permission (or public), and sandbox capability profiles with the actions each one removes (capabilities.deniedActions: profile -> actions; a profile it does not list removes nothing). Single authority for the frontend bridge (permissionConfig.ts / capabilityProfiles.ts import it), crates/tapp-contract export, and the Tapp CLI/SDK generated contract.",
+  "description": "Tapp sandbox bridge contract: action -> required permission (or public), and sandbox capability profiles with the actions each one removes (capabilities.deniedActions: profile -> actions; a profile it does not list removes nothing). actionsSince lists actions added after contract version 1 with the version that added them (the CLI requires minContractVersion for them). Single authority for the frontend bridge (permissionConfig.ts / capabilityProfiles.ts import it), crates/tapp-contract export, and the Tapp CLI/SDK generated contract.",
   "actions": {
     "lifecycle.ready": "public",
     "lifecycle.error": "public",
@@ -282,6 +282,7 @@
     "federation.uploadChunk": "federation:files",
     "federation.cancelTransfer": "federation:files"
   },
+  "actionsSince": {},
   "capabilities": {
     "profiles": [
       "page",

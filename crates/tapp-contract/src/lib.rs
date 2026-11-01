@@ -6,6 +6,7 @@ use serde_json::{Value, json};
 use std::collections::BTreeMap;
 
 pub mod contract_rules;
+pub mod contract_version;
 pub mod headers;
 pub mod manifest;
 pub mod paths;
@@ -20,6 +21,11 @@ fn string_map<'a>(values: &'a [(&'a str, &'a str)]) -> BTreeMap<&'a str, &'a str
 }
 
 #[cfg(feature = "tapp-contract-schema")]
+fn string_u32_map<'a>(values: &'a [(&'a str, u32)]) -> BTreeMap<&'a str, u32> {
+    values.iter().copied().collect()
+}
+
+#[cfg(feature = "tapp-contract-schema")]
 fn list_map<'a>(values: &'a [(&'a str, &'a [&'a str])]) -> BTreeMap<&'a str, &'a [&'a str]> {
     values.iter().copied().collect()
 }
@@ -30,13 +36,15 @@ fn list_map<'a>(values: &'a [(&'a str, &'a [&'a str])]) -> BTreeMap<&'a str, &'a
 const SANDBOX_CONTRACT_JSON: &str = include_str!("../../../shared/tapp_sandbox_contract.json");
 
 /// Parsed sandbox contract, checked against the permission catalog: every
-/// action names `public` or a catalog permission, and `deniedActions` maps
-/// listed profiles to known actions.
+/// action names `public` or a catalog permission, `deniedActions` maps listed
+/// profiles to known actions, and `actionsSince` maps known actions to
+/// contract versions after 1 that this crate implements.
 #[cfg(feature = "tapp-contract-schema")]
-fn sandbox_contract() -> (Value, Value) {
+fn sandbox_contract() -> (Value, Value, Value) {
     let mut value: Value = serde_json::from_str(SANDBOX_CONTRACT_JSON)
         .expect("shared/tapp_sandbox_contract.json must be valid JSON");
     let actions = value["actions"].take();
+    let actions_since = value["actionsSince"].take();
     let capabilities = value["capabilities"].take();
     let levels = permission::permission_levels();
     let action_map = actions
@@ -82,7 +90,23 @@ fn sandbox_contract() -> (Value, Value) {
             );
         }
     }
-    (actions, capabilities)
+    for (action, since) in actions_since
+        .as_object()
+        .expect("sandbox contract actionsSince must be an object")
+    {
+        assert!(
+            action_map.contains_key(action),
+            "actionsSince names unknown action {action}"
+        );
+        let since = since
+            .as_u64()
+            .unwrap_or_else(|| panic!("actionsSince.{action} must be an integer"));
+        assert!(
+            (2..=u64::from(contract_version::TAPP_CONTRACT_VERSION)).contains(&since),
+            "actionsSince.{action} is {since}, outside 2..=TAPP_CONTRACT_VERSION"
+        );
+    }
+    (actions, capabilities, actions_since)
 }
 
 #[cfg(feature = "tapp-contract-schema")]
@@ -104,8 +128,11 @@ fn ai_operation_permissions() -> BTreeMap<String, &'static str> {
 #[cfg(feature = "tapp-contract-schema")]
 pub fn export_tapp_contract() -> Value {
     let schema = schemars::schema_for!(manifest::TappManifest);
-    let (actions, capabilities) = sandbox_contract();
+    let (actions, capabilities, actions_since) = sandbox_contract();
     json!({
+        "contractVersion": contract_version::TAPP_CONTRACT_VERSION,
+        "manifestFieldsSince": string_u32_map(contract_version::MANIFEST_FIELDS_SINCE),
+        "actionsSince": actions_since,
         "schema": schema,
         "limits": {
             "tappIdLength": contract_rules::MAX_TAPP_ID_LEN,
@@ -272,6 +299,7 @@ pub fn export_tapp_contract() -> Value {
 #[cfg(all(test, feature = "tapp-contract-schema"))]
 mod export_catalog_tests {
     use super::export_tapp_contract;
+    use crate::contract_version;
     use crate::permission::{
         permission_levels, replacement_hints, requires_authenticated_subject_names,
     };
@@ -335,5 +363,23 @@ mod export_catalog_tests {
                 .get("headlessDeniedActions")
                 .is_none()
         );
+
+        assert_eq!(
+            exported["contractVersion"],
+            contract_version::TAPP_CONTRACT_VERSION
+        );
+        assert!(exported["manifestFieldsSince"].is_object());
+        assert!(exported["actionsSince"].is_object());
+        let schema_fields = exported["schema"]["properties"]
+            .as_object()
+            .expect("manifest schema properties");
+        assert!(schema_fields.contains_key(contract_version::MIN_CONTRACT_VERSION_FIELD));
+        for field in exported["manifestFieldsSince"]
+            .as_object()
+            .expect("manifestFieldsSince")
+            .keys()
+        {
+            assert!(schema_fields.contains_key(field), "{field}");
+        }
     }
 }

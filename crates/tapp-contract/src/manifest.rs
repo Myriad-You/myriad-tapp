@@ -64,6 +64,11 @@ pub struct TappManifest {
     pub homepage: Option<String>,
     pub repository: Option<String>,
     pub min_system_version: Option<String>,
+    /// 需要的 Tapp 契约版本（从 1 开始的整数）。只在用到第 1 版之后才加的
+    /// 字段或动作时写；宿主在严格解析之前先读它，比自己实现的新就要求更新宿主。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "tapp-contract-schema", schemars(range(min = 1)))]
+    pub min_contract_version: Option<u32>,
     pub widgets: Option<Vec<TappWidgetDef>>,
     #[serde(default)]
     pub background_requirements: Option<Vec<String>>,

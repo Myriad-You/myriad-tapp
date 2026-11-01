@@ -301,6 +301,19 @@ pub fn validate_tapp_manifest(
             ));
         }
     }
+    if let Some(required) = manifest.min_contract_version {
+        if required == 0 {
+            return Err("Tapp minContractVersion must be 1 or greater".to_string());
+        }
+        let supported = crate::contract_version::TAPP_CONTRACT_VERSION;
+        if required > supported {
+            return Err(crate::contract_version::ContractTooNew {
+                required: u64::from(required),
+                supported,
+            }
+            .to_string());
+        }
+    }
     if let Some(author) = &manifest.author {
         if author.name.trim().is_empty() || author.name.len() > 255 {
             return Err("Tapp author.name must contain 1-255 characters".to_string());
@@ -1211,6 +1224,21 @@ mod tests {
             "permissions": permissions,
         }))
         .unwrap()
+    }
+
+    #[test]
+    fn min_contract_version_must_be_positive_and_implemented() {
+        let mut declared = manifest(&[]);
+        declared.min_contract_version = Some(crate::contract_version::TAPP_CONTRACT_VERSION);
+        assert!(validate_tapp_manifest(&declared, &current()).is_ok());
+
+        declared.min_contract_version = Some(0);
+        let err = validate_tapp_manifest(&declared, &current()).unwrap_err();
+        assert!(err.contains("minContractVersion"), "{err}");
+
+        declared.min_contract_version = Some(crate::contract_version::TAPP_CONTRACT_VERSION + 1);
+        let err = validate_tapp_manifest(&declared, &current()).unwrap_err();
+        assert!(err.contains("needs a newer host"), "{err}");
     }
 
     #[test]
