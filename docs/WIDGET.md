@@ -86,7 +86,7 @@ Manifest 顶层 `settings` 由整个 Tapp 共享；`widgets[].settings` 则为�
 ## 宿主加载骨架（Widget Skeleton）
 
 Dashboard 上**所有第三方 Tapp 小组件**默认接入宿主通用骨架
-（`frontend/src/components/widgets/shared/WidgetSkeleton`），内置系统小组件也复用同一套。
+（Myriad 的 `frontend/src/components/widgets/shared/WidgetSkeleton`），内置系统小组件也复用同一套。
 
 ### 设计原则（最高效默认）
 
@@ -136,7 +136,7 @@ TappWidgetSandbox
 4. 需要自定义宿主骨架形状时（仅内置小组件）：`WidgetSkeleton` 的 `preset` /
    `SkeletonBone` / `accent`；Tapp 作者无此 API，宿主已默认最优路径。
 
-实现参考：
+实现参考（Myriad 宿主仓库）：
 
 - `frontend/src/components/widgets/shared/WidgetSkeleton.tsx`（`TAPP_WIDGET_SKELETON`）
 - `frontend/src/hooks/useTappWidgets.ts`（Suspense 包装）

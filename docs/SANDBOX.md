@@ -132,7 +132,7 @@ Tapp SDK 把调用转换为请求消息。宿主只接受同时满足以下条�
 ### Payload 大小
 
 `TappBridge` 在校验阶段限制 request payload，防止内存攻击（实现见
-`tapp/runtime/src/TappBridge.ts`）：
+`runtime/src/TappBridge.ts`）：
 
 | action | 上限 | 说明 |
 | ------ | ---- | ---- |

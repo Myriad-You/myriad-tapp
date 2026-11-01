@@ -569,6 +569,24 @@ Manifest 必须同时声明 `ai:image` **和** `manifest.ai`（`protocolVersion:
 **解决方案**：对齐分类稳定 ID；补齐 `download` 路径并保证 `base_url` 下可 GET。见
 [STORE · 索引检查清单](STORE.md#索引检查清单)。
 
+### ❌ 安装时提示「这个应用需要更新版本的 Myriad」
+
+**症状**：上传 `.tapp` 或从商店安装时返回 400，错误码 `tapp_contract_too_new`。
+
+**原因**：Manifest 的 `minContractVersion` 比这个站点实现的 Tapp 契约新，应用用到了站点还没有的
+字段或 SDK 动作。
+
+**解决方案**：站点升级 Myriad 后再装。作者想让旧站点也能装，就别用那些新功能，并删掉
+`minContractVersion`。见 [MANIFEST · 版本要求](MANIFEST.md#版本要求)。
+
+### ❌ `myriad-tapp check` 报 `contract-version-required`
+
+**原因**：代码或 Manifest 用到了第 1 版之后才加的东西（例如 `Tapp.context.getCapabilities()`）。
+
+**解决方案**：照提示在 `manifest.json` 加上 `"minContractVersion": N`。CLI 不会替你写；
+反过来，没用到新功能却写了这个字段，`check` 会给 `contract-version-unneeded` 警告，因为更早的
+站点会把带这个字段的 Manifest 整个拒掉。
+
 ---
 
 ## 调试技巧
@@ -625,5 +643,6 @@ Tapp.lifecycle.onReady(async function () {
 - [ ] 在多个 Widget 尺寸下测试显示效果
 - [ ] 在亮色和暗色模式下测试样式
 - [ ] `Tapp.api` 使用的名称已在 manifest 的 `apis` 中声明
+- [ ] `myriad-tapp check` 没有 `contract-version-*` 报错
 - [ ] 无控制台错误（忽略已知的安全警告）
 - [ ] 完整清单见 [STORE.md](STORE.md#索引检查清单)

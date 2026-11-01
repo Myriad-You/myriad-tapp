@@ -492,7 +492,7 @@ await Tapp.platform.addItems([
 **权限**: `analytics:read`（basic，guest-safe；游客可用）
 
 读取站点第一方访客统计的**聚合**结果。**不包含**访客哈希、序位（`your_ordinal_today` /
-`counted`）等身份相关字段。后端实现：`backend/src/api/tapp_runtime/analytics.rs`。
+`counted`）等身份相关字段。后端实现：Myriad 的 `backend/src/api/tapp_runtime/analytics.rs`。
 
 ### 双 scope（角色门控）
 
@@ -1405,7 +1405,7 @@ Channel/Room **JSON 消息**（含内联 base64 图）后端载荷上限默认 *
 加密时 `sendMessage` / `sendRoomMessage` 可设 `encrypt: true`：库内与联邦 fan-out 仍为密文，
 本机 WebSocket 在密钥可用时推送明文以免 UI 先闪 ciphertext。
 
-参数与 REST 字段以 `frontend/src/types/federation.ts`、后端路由与
+参数与 REST 字段以 Myriad 的 `frontend/src/types/federation.ts`、后端路由与
 `fixtures/action_permissions.json` 为准，勿从方法名臆造字段。
 
 ## Game API

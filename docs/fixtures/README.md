@@ -7,24 +7,24 @@ permissions are owned by `shared/tapp_sandbox_contract.json`. Tests fail on drif
 
 | File | What it captures | Consumers |
 | ---- | ---------------- | --------- |
-| `host_route_permissions.json` | HTTP method + Axum matched path → permission | Backend `host_attribution` (loaded at runtime via `include_str!`) + Rust unit tests |
-| `action_permissions.json` | Host-proxied sandbox action → permission (consistency fixture; authority is `shared/tapp_sandbox_contract.json`) | Frontend `PERMISSION_MAP` consistency test + Rust permission-string checks |
+| `host_route_permissions.json` | HTTP method + Axum matched path → permission | Myriad backend `host_attribution` (loaded at runtime via `include_str!`) + Rust unit tests |
+| `action_permissions.json` | Host-proxied sandbox action → permission (consistency fixture; authority is `shared/tapp_sandbox_contract.json`) | Runtime `PERMISSION_MAP` (`runtime/src/permissionConfig.ts`) consistency test + Rust permission-string checks |
 
 ## How to update
 
 1. **Edit the fixture(s) first** (add/remove/rename host routes, or mirror a
    host-proxied action change you are making in `shared/tapp_sandbox_contract.json`).
-2. Update `TappPermission` in `crates/tapp-contract/src/permission.rs` and frontend
+2. Update `TappPermission` in `crates/tapp-contract/src/permission.rs` and runtime
    `PERMISSION_LEVELS` / types if you introduced a new permission string.
 3. Update `shared/tapp_sandbox_contract.json` (the sandbox action table read by
-   the frontend `PERMISSION_MAP` and exported to the Tapp CLI) for action changes,
+   the runtime `PERMISSION_MAP` and exported to the Tapp CLI) for action changes,
    then run `npm run sync-contract` in `tools/tapp-cli`.
 4. Host route maps are loaded from `host_route_permissions.json` — no parallel
    hand-written match arms to edit for speech/phantasi/federation.
 5. Run:
 
    ```bash
-   # from backend/
+   # from Myriad backend/
    cargo test host_attribution
 
    # from runtime/ (in Myriad: tapp/runtime/)
